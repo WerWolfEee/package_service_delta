@@ -1,0 +1,9 @@
+fastapi==0.115.12
+uvicorn==0.34.0
+python-multipart==0.0.5
+aiohttp==3.11.14
+redis==5.0.1
+SQLAlchemy==2.0.40
+SQLAlchemy-Utils==0.41.2
+asyncmy==0.2.10
+cryptography==44.0.2

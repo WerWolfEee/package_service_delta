@@ -1,0 +1,27 @@
+import asyncio
+import uvicorn
+from app.database import engine
+from app.database import Base
+from app.main import app
+from app.packages.models import PackageType
+from app.packages.models import Package
+from check_service.schemas import RedisConfig
+
+
+PORT = 8010
+HOST = '0.0.0.0'
+
+if __name__ == '__main__':
+    async def init_models():
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+
+    asyncio.run(init_models())
+
+    uvicorn.run(
+        app='main:app',
+        host=HOST,
+        port=PORT,
+        reload=True,
+        log_config='etc/logging.conf',
+    )
