@@ -15,13 +15,14 @@ import  app.redis as app_redis
 
 
 logger = logging.getLogger(__name__)
+logger.setLevel(10)
 
 
 class Service:
     def __init__(
             self,
             conf: RedisConfig,
-            loop: asyncio.BaseEventLoop,
+            loop: asyncio.BaseEventLoop | asyncio.AbstractEventLoop,
             redis: Redis
     ):
         super().__init__()
@@ -41,16 +42,14 @@ class Service:
 
         self.pubsub = self.redis.pubsub()
         await self.pubsub.subscribe(self.queue_name)
-        self.redis_listener = self.loop.create_task(self.listen_redis_task()) # TODO
+        self.redis_listener = self.loop.create_task(self.listen_redis_task())
 
     async def listen_redis_task(self):
         logger.info("Start redis listener task")
         async for mes in self.pubsub.listen():
             try:
                 logger.info(mes)
-                if mes['data'] == 1:
-                    continue
-                if mes['data'] == 'true':
+                if mes['channel'] == b'start_sync' and mes['data'] == b'true':
                     res = await PackagesDAO.find_with_no_price()
                     models = []
                     for i in res:
@@ -123,7 +122,7 @@ class Service:
                 await asyncio.sleep(300)
 
 
-async def run(loop: asyncio.BaseEventLoop):
+async def run(loop: asyncio.AbstractEventLoop):
     config = RedisConfig(dsn='redis://redis')  # TODO
     redis_pool = await redis.init(config)
     service = Service(

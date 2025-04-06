@@ -2,10 +2,6 @@ import asyncio
 import uvicorn
 from app.database import engine
 from app.database import Base
-from app.main import app
-from app.packages.models import PackageType
-from app.packages.models import Package
-from check_service.schemas import RedisConfig
 
 
 PORT = 8010

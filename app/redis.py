@@ -46,9 +46,8 @@ async def del_(conn: Connection, key: str):
 
 
 async def publish(
-        # conn: Connection,
+        conn: Connection,
         queue_name: str,
         data: Any
 ):
-    conn = Connection
     await conn.publish(channel=queue_name, message=json.dumps(data))

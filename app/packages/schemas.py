@@ -1,7 +1,7 @@
 from decimal import Decimal
 from enum import Enum
-from typing import Optional
-from pydantic import BaseModel, Field, ConfigDict
+from typing import Optional, Union
+from pydantic import BaseModel, Field, ConfigDict, model_validator
 
 
 class SPackageTypes(str, Enum):
@@ -33,10 +33,16 @@ class SPackage(BaseModel):
     weight: int = Field(..., description="Вес посылки в граммах")
     package_type: SPackageType
     cost_of_contents: Decimal = Field(..., description="Стоимость содержимого посылки в долларах")
-    price: Optional[Decimal] = Field(None, description="Стоимость доставки")
+    price: Union[Decimal, str, None] = Field(None, description="Стоимость доставки")
     user_session_id: str
 
     model_config = ConfigDict(from_attributes=True)
+
+    @model_validator(mode='after')
+    def validate_price(self):
+        if not self.price:
+            self.price = 'Не рассчитано'
+        return self
 
 
 class SPackageCheck(BaseModel):
