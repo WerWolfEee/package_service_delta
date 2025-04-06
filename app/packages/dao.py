@@ -8,34 +8,39 @@ from app.packages.models import PackageType
 
 class PackagesDAO(BaseDAO):
     model = Package
+    model_pt = PackageType
 
     @classmethod
-    async def find_all(cls, user_session_id, **filter):
+    async def find_all(cls, user_session_id, page: int, page_size: int, **filter):
         async with async_session_maker() as session:
             filter_dict = {}
             for k, v in filter.items():
                 filter_dict[k] = v
+
             query = select(cls.model).options(joinedload(cls.model.package_type)).filter_by(user_session_id=user_session_id)
-            if filter_dict.get("package_type") is not None and filter_dict.get("is_price_count") is not None:
-                query = query.filter(
-                    cls.model.package_type.name == filter_dict.get("package_type"),
-                    cls.model.price is not None if filter_dict["is_price_count"] is True else cls.model.price is None
-            )
-            elif filter_dict.get("package_type") is not None and filter_dict.get("is_price_count") is None:
-                query = query.filter(
-                    cls.model.package_type.name == filter_dict.get("package_type")
-                )
+
+            if filter_dict.get("package_type") is not None:
+                ft = await session.execute(select(cls.model_pt).filter_by(name=filter_dict.get("package_type")))
+                ft = ft.scalars().one()
+                query = query.filter(cls.model.package_type_id == ft.id)
+
+                if filter_dict.get("is_price_count") is not None:
+                    query = query.filter(
+                        cls.model.price != None if filter_dict.get("is_price_count") is True else cls.model.price == None
+                    )
+
             elif filter_dict.get("package_type") is None and filter_dict.get("is_price_count") is not None:
-                if filter_dict.get("is_price_count") is True:
-                    query = query.filter(
-                        cls.model.price is None
-                    )
-                else:
-                    query = query.filter(
-                        cls.model.price is not None
-                    )
+                query = query.filter(
+                    cls.model.price != None if filter_dict.get("is_price_count") is True else cls.model.price == None
+                )
+
             else:
                 query = query.filter()
+
+            query = query.limit(page_size)
+            if page:
+                query = query.offset((page * page_size) - page_size)
+
             result = await session.execute(query)
             return result.scalars().all()
 

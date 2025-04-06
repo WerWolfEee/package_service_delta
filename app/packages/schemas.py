@@ -67,3 +67,8 @@ class PackageFilters:
         data = {'package_type': self.package_type, 'is_price_count': self.is_price_count}
         filtered_data = {key: value for key, value in data.items() if value is not None}
         return filtered_data
+
+
+class SpackageList(BaseModel):
+    items: list[SPackage]
+    count: int

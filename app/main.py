@@ -38,7 +38,6 @@ def register_startup(app):
             logger.exception('Startup crashed')
 
 
-
 async def startup(app):
     state: State = app.state
 

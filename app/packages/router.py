@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from app import redis
 from app.packages.dao import PackagesDAO, PackageTypesDAO
-from app.packages.schemas import SPackage, SPackageNew, SPackageType, SPackageTypeNew, PackageFilters
+from app.packages.schemas import SPackage, SPackageNew, SPackageType, SPackageTypeNew, PackageFilters, SpackageList
 from app.packages.dependencies import get_session, get_redis
 
 
@@ -31,18 +31,23 @@ async def create_package(package: SPackageNew, session: str = Depends(get_sessio
     return {"message": "Посылка успешно добавлена!", "package_id": res.id}
 
 
-@router.get("/packages", summary="Получить список посылок с фильтрами", response_model=list[SPackage])
+@router.get("/packages", summary="Получить список посылок с фильтрами", response_model=SpackageList)
 async def get_packages(
+        page: int = 1,
+        page_size: int = 5,
         filters: PackageFilters = Depends(),
         session: str = Depends(get_session),
-) -> list[SPackage] | dict:
-    res = await PackagesDAO.find_all(user_session_id=session, **filters.to_dict())
+) -> SpackageList | dict:
+    res = await PackagesDAO.find_all(user_session_id=session, page=page, page_size=page_size, **filters.to_dict())
     if not res:
         raise HTTPException(status_code=404, detail=f'Посылки с указанными вами параметрами не найдены!')
     res_models = []
     for i in res:
         res_models.append(SPackage.model_validate(i))
-    return res_models
+    return SpackageList(
+        items=res_models,
+        count=len(res_models)
+    )
 
 @router.get("/price_calculation", summary="Запустить принудительный расчет стоимости доставки", response_model=None)
 async def start_price_calculation(conn = Depends(get_redis)) -> dict:

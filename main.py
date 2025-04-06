@@ -2,6 +2,7 @@ import asyncio
 import uvicorn
 from app.database import engine
 from app.database import Base
+from app.main import app
 
 
 PORT = 8010
